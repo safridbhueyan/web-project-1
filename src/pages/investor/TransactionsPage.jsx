@@ -17,13 +17,18 @@ const SEED_TRANSACTIONS = [
 const TransactionsPage = () => {
     const { user } = useAuth();
     const [transactions, setTransactions] = useState(SEED_TRANSACTIONS);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         (async () => {
+            setLoading(true);
             try {
                 const data = await getTransactionsByUser(user?.uid || 'demo');
                 if (data && data.length) setTransactions(data);
             } catch { /* keep seed */ }
+            finally {
+                setLoading(false);
+            }
         })();
     }, [user]);
 

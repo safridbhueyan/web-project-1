@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "firebase deploy --only hosting,firestore:rules",
+    "deploy:all": "firebase deploy",
     "emulators": "set JAVA_HOME=C:\\Program Files\\Microsoft\\jdk-21.0.10.7-hotspot && set PATH=C:\\Program Files\\Microsoft\\jdk-21.0.10.7-hotspot\\bin;%PATH% && firebase emulators:start"
   },
   "dependencies": {

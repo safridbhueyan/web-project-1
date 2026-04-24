@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth.js';
 import { ToastProvider } from './components/ui/Toast.jsx';
 import { ROLES, ROLE_DASHBOARD } from './utils/constants.js';
+import { PageLoader } from './components/ui/Loader.jsx';
 
 // Auth & Public
 import Login from './pages/auth/Login.jsx';
@@ -52,7 +53,7 @@ function App() {
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>
-        Loading iHarvest...
+        <PageLoader message="Loading iHarvest..." />
       </div>
     );
   }
@@ -68,7 +69,8 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={user ? <Navigate to={getRootRedirect()} replace /> : <Login />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="/design" element={<DesignSystemDemo />} />
+        {/* Design system demo — dev only */}
+        {import.meta.env.DEV && <Route path="/design" element={<DesignSystemDemo />} />}
 
         {/* Root Redirect */}
         <Route path="/" element={<Navigate to={getRootRedirect()} replace />} />
