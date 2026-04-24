@@ -1,6 +1,6 @@
 # iHarvest — Project Progress Report (Phase-Based)
 
-This report maps our current development progress against the original 8-phase project plan. We have successfully completed Phases 1, 2, 3, and 5, and are currently transitioning into Phase 4 (Role Dashboards) and Phase 6 (Platform Features).
+This report maps our current development progress against the original 8-phase project plan. We have successfully completed Phases 1, 2, 3, 4, 5, 6, and 7, followed by an exhaustive code audit and bug-fixing phase. We are currently transitioning into Phase 8 (Polish & Deploy).
 
 ---
 
@@ -46,12 +46,12 @@ The application routing and role-based access control are complete.
 *   **Data Grids:** Advanced Table sorting with search and client-side pagination (`src/components/ui/Table.jsx`, `.css`).
 *   **Media & Visualization:** Traceability View component (`src/components/ui/TraceabilityView.jsx`, `.css`), Lightbox for images (`src/components/ui/Lightbox.jsx`, `.css`), Status Badge (`src/components/ui/StatusBadge.jsx`, `.css`).
 
-## 🔴 Phase 7: Cloud Functions (Server-Side) (⬜ NOT STARTED)
-**What is Left to Build in Detail:**
-We need to write the Node.js backend functions in the Firebase console for:
-1.  `calculateROI` (Auto-calculates ROI based on mortality/growth).
-2.  `sendNotification` (Email/push alerts).
-3.  `processInvestorPayout`.
+## 🟢 Phase 7: Cloud Functions (Server-Side) (✅ COMPLETE)
+**Files Built:**
+*   `functions/index.js` containing three callable HTTPS functions:
+    1.  `calculateROI`: Calculates expected ROI based on livestock packages and mortality.
+    2.  `sendNotification`: Creates notification records in Firestore and simulates email dispatch.
+    3.  `processInvestorPayout`: Handles transactional atomicity for closing out completed investments.
 
 ## 🔴 Phase 8: Polish & Deploy (⬜ NOT STARTED)
 **What is Left to Build in Detail:**
@@ -70,8 +70,187 @@ We need to write the Node.js backend functions in the Firebase console for:
 ██████████████████████████████  Phase 4: Role Dashboards    ✅ COMPLETE
 ██████████████████████████████  Phase 5: Router Wiring      ✅ COMPLETE
 ██████████████████████████████  Phase 6: Platform Features  ✅ COMPLETE
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  Phase 7: Cloud Functions    ⬜ NOT STARTED
+██████████████████████████████  Phase 7: Cloud Functions    ✅ COMPLETE
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  Phase 8: Polish & Deploy    ⬜ NOT STARTED
 
-Overall: ████████████████████████░░░░░░  ~80% complete
+Overall: ███████████████████████████░░░  ~90% complete
 ```
+
+---
+
+## 🐛 Bugs Found & Fixed (Deep Code Audit)
+
+Following the completion of the dashboards, an exhaustive code audit was performed to stabilize the platform. The following critical and UI issues were resolved:
+
+| # | Component/File | Bug | Resolution |
+|---|---|---|---|
+| 1 | `RequestsPage.jsx` | `loading` variable used but never declared → crash | Added `useState(false)` + wired to `load()` |
+| 2 | `TransactionsPage.jsx` | `loading` variable undefined → white page crash | Added `useState(false)` + wired to fetch |
+| 3 | `Login.jsx` | Missing demo buttons for FSO, Manager, Fund Manager | Added 3 new demo credential buttons |
+| 4 | `Navbar.jsx` | Showed raw email instead of user's name with Mock Auth | Now reads `userProfile.name` via `useAuth` |
+| 5 | `FsoDashboard.jsx` | Pending count always 0 (wrong field) | Fixed to filter on `healthStatus === sick/critical` |
+| 6 | `Card.jsx` | Trend badge showed raw count as `%` | Removed auto-`%` formatting; use `trend.label` only |
+| 7 | `FundManagerDashboard` | Label "Total Vol." confusing | Renamed to "Total Assets" and "Total Transactions" |
+| 8 | `Login.jsx` | Dead `useAuth` import | Removed unused import |
+| 9 | `DashboardLayout.jsx`| Passed stale `user` prop to Navbar | Removed prop; Navbar reads auth internally |
+| 10 | `package.json` | `npm run emulators` failed every new terminal | Hardcoded Java 21 path into npm script to force JDK 21 |
+| 11 | `global.css` | **Critical:** Named spacing (`--spacing-md`, etc.) was completely missing, collapsing all gaps to zero | Appended the entire named scale to the root CSS |
+| 12 | `Sidebar.jsx` | Dead routes for Fund Manager (`/fund-manager/pools`) | Removed non-existent navigation links |
+
+---
+
+## 🚀 Deployment Guide
+
+### Step 1 — Get Real Firebase Credentials
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Create a project (or use existing)
+3. Go to **Project Settings → Your Apps → Web App** → copy the config object
+4. Update your `.env` file:
+
+```env
+VITE_FIREBASE_API_KEY="your_real_api_key"
+VITE_FIREBASE_AUTH_DOMAIN="your_project.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="your_real_project_id"
+VITE_FIREBASE_STORAGE_BUCKET="your_project.appspot.com"
+VITE_FIREBASE_MESSAGING_SENDER_ID="your_sender_id"
+VITE_FIREBASE_APP_ID="your_app_id"
+VITE_USE_MOCK_AUTH="false"
+VITE_USE_FIREBASE_EMULATOR="false"
+```
+
+### Step 2 — Update firebase.json Project ID
+```bash
+firebase use your_real_project_id
+```
+
+### Step 3 — Deploy Firestore Rules
+```bash
+firebase deploy --only firestore:rules
+```
+
+### Step 4 — Deploy Cloud Functions
+```bash
+cd functions
+npm install
+cd ..
+firebase deploy --only functions
+```
+
+### Step 5 — Build & Deploy Frontend
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+Your app is now live at `https://your_project.web.app`!
+
+---
+
+## 💻 Running Locally (Existing PC)
+
+### One-Time Setup (Already Done)
+```powershell
+npm install -g firebase-tools
+winget install Microsoft.OpenJDK.21
+```
+
+### Every Time You Want to Run
+Open **two terminal windows** in `d:\user\srabon\software`:
+
+**Terminal 1 — Backend (Firebase Emulators):**
+```powershell
+npm run emulators
+```
+Wait until you see: `✔ All emulators ready!`
+
+**Terminal 2 — Frontend (React Dev Server):**
+```powershell
+npm run dev
+```
+
+Open browser: `http://localhost:5173`  
+Emulator Dashboard: `http://localhost:4000`
+
+### To Stop
+Press `Ctrl + C` in each terminal.
+
+---
+
+## 🖥️ Brand New PC Setup — Complete Commands
+
+Run these commands **in order** in PowerShell or Command Prompt:
+
+### 1. Fix PowerShell Script Policy (one-time)
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+### 2. Install Node.js
+Download from [nodejs.org](https://nodejs.org) (LTS version) and install.  
+Verify: `node --version` and `npm --version`
+
+### 3. Install Java 21 (required by Firebase Emulators)
+```powershell
+winget install Microsoft.OpenJDK.21
+```
+Or download from [Microsoft Build of OpenJDK](https://www.microsoft.com/openjdk).
+
+### 4. Install Firebase CLI
+```powershell
+npm install -g firebase-tools
+```
+
+### 5. Install Git (if not installed)
+```powershell
+winget install Git.Git
+```
+
+### 6. Clone the Project
+```powershell
+git clone https://github.com/YOUR_REPO/iharvest.git
+cd iharvest
+```
+
+### 7. Install Project Dependencies
+```powershell
+npm install
+```
+
+### 8. Install Cloud Functions Dependencies
+```powershell
+cd functions
+npm install
+cd ..
+```
+
+### 9. Set Up Environment File
+Copy the example file and fill in values:
+```powershell
+copy .env.example .env
+```
+Edit `.env` with your Firebase credentials (or leave dummy values for local testing).
+
+### 10. Run the Project
+```powershell
+# Terminal 1
+npm run emulators
+
+# Terminal 2 (new window)
+npm run dev
+```
+
+Open: `http://localhost:5173`
+
+---
+
+## 📋 Quick Reference — Login Credentials (Mock Auth)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@iharvest.com | admin123 |
+| Farmer | farmer@iharvest.com | farmer123 |
+| Investor | investor@iharvest.com | investor123 |
+| Veterinarian | vet@iharvest.com | vet123 |
+| FSO | fso@iharvest.com | fso123 |
+| Cluster Manager | manager@iharvest.com | manager123 |
+| Fund Manager | fund@iharvest.com | fund123 |
