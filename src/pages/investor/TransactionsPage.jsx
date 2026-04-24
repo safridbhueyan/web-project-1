@@ -17,17 +17,13 @@ const SEED_TRANSACTIONS = [
 const TransactionsPage = () => {
     const { user } = useAuth();
     const [transactions, setTransactions] = useState(SEED_TRANSACTIONS);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         (async () => {
-            setLoading(true);
             try {
                 const data = await getTransactionsByUser(user?.uid || 'demo');
                 if (data && data.length) setTransactions(data);
-            } catch { /* keep seed */ } finally {
-                setLoading(false);
-            }
+            } catch { /* keep seed */ }
         })();
     }, [user]);
 
@@ -45,39 +41,25 @@ const TransactionsPage = () => {
                 </span>
             )
         },
-        {
-            header: 'Amount', accessor: 'amount',
-            render: (v, row) => (
-                <span style={{ color: row.type === 'payout' ? '#16a34a' : 'var(--text-primary)', fontWeight: 600 }}>
-                    {row.type === 'payout' ? '+' : '-'}${Number(v).toLocaleString()}
-                </span>
-            )
-        },
+        { header: 'Amount', accessor: 'amount', render: (v, row) => <span style={{ color: row.type === 'payout' ? '#16a34a' : 'var(--text-primary)', fontWeight: 600 }}>{row.type === 'payout' ? '+' : '-'}${Number(v).toLocaleString()}</span> },
         { header: 'Description', accessor: 'description' },
         { header: 'Status', accessor: 'status', render: (v) => <StatusBadge status={v} /> },
-        { header: 'Date', accessor: 'createdAt', render: (v) => v ? new Date(v).toLocaleDateString() : '—' },
+        { header: 'Date', accessor: 'createdAt' },
     ];
 
     return (
         <DashboardLayout>
             <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-                <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: 'var(--spacing-xs)' }}>
-                    Transaction History
-                </h1>
+                <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: 'var(--spacing-xs)' }}>Transaction History</h1>
                 <p style={{ color: 'var(--text-secondary)' }}>All your deposits, investments, and payout records.</p>
             </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-xl)' }}>
                 <Card variant="stat" title="Total Invested" value={`$${totalDeposits.toLocaleString()}`} icon={DollarSign} />
-                <Card variant="stat" title="Total Payouts" value={`$${totalPayouts.toLocaleString()}`} icon={ArrowUpRight} trend={{ isPositive: true }} />
-                <Card variant="stat" title="Total Transactions" value={String(transactions.length)} icon={ArrowDownLeft} />
+                <Card variant="stat" title="Total Payouts" value={`$${totalPayouts.toLocaleString()}`} icon={ArrowUpRight} trend={{ value: totalPayouts, isPositive: true }} />
             </div>
-
             <Card title="All Transactions">
-                {loading
-                    ? <p style={{ padding: 'var(--spacing-lg)', color: 'var(--text-secondary)' }}>Loading…</p>
-                    : <Table columns={columns} data={transactions} searchable pageSize={10} />
-                }
+                {loading ? <p style={{ padding: 'var(--spacing-lg)', color: 'var(--text-secondary)' }}>Loading…</p>
+                    : <Table columns={columns} data={transactions} searchable pageSize={10} />}
             </Card>
         </DashboardLayout>
     );

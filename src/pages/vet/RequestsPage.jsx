@@ -22,16 +22,12 @@ const RequestsPage = () => {
     const [diagnosing, setDiagnosing] = useState(null);
     const [prescription, setPrescription] = useState('');
     const [saving, setSaving] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     const load = async () => {
-        setLoading(true);
         try {
             const data = await getPendingRequests();
             if (data && data.length) setRequests(data);
-        } catch { /* keep seed */ } finally {
-            setLoading(false);
-        }
+        } catch { /* keep seed */ }
     };
 
     useEffect(() => { load(); }, []);
