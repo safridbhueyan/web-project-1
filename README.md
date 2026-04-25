@@ -1,4 +1,5 @@
 # iHarvest: Developer Handover & Study Report
+### Live Site: [https://iharvest-1bd13.web.app](https://iharvest-1bd13.web.app)
 ### Deploy-Ready Milestone
 
 This report is designed for you and your teammate to fully understand, present, and deploy what you have built. It covers the complete architecture of the current system, answers the technical questions you are most likely to face, and provides a step-by-step tutorial for going live on Firebase Hosting.
