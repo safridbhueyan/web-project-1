@@ -27,7 +27,7 @@ const Login = () => {
     try {
       const profile = await loginUser(email, password);
       addToast({ message: `Welcome back, ${profile.name || profile.email}!`, type: 'success' });
-      
+
       // Navigate to the correct dashboard based on role
       const dashboardPath = ROLE_DASHBOARD[profile.role] || '/unauthorized';
       navigate(dashboardPath, { replace: true });
@@ -51,7 +51,7 @@ const Login = () => {
         <h1>iHarvest</h1>
         <p>Premium Contract Farming</p>
       </div>
-      
+
       <Card className="login-card">
         <h2 className="login-title">Sign In</h2>
         <form onSubmit={handleLogin} className="login-form">
@@ -71,11 +71,11 @@ const Login = () => {
             icon={Lock}
             disabled={loading}
           />
-          <Button 
-            type="submit" 
-            variant="primary" 
-            fullWidth 
-            loading={loading}
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            isLoading={loading}
             icon={LogIn}
           >
             Sign In
