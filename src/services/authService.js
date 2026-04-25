@@ -51,7 +51,7 @@ const setMockUser = (user) => {
 
 const generateMockProfile = (email) => {
   const rolePrefix = email.split('@')[0]; // e.g., 'admin', 'farmer'
-  
+
   // map prefix to actual roles
   const roleMap = {
     'admin': ROLES.ADMIN,
@@ -62,9 +62,9 @@ const generateMockProfile = (email) => {
     'manager': ROLES.CLUSTER_MANAGER,
     'fund': ROLES.FUND_MANAGER
   };
-  
+
   const role = roleMap[rolePrefix] || ROLES.INVESTOR;
-  
+
   return {
     uid: `mock-uid-${rolePrefix}`,
     email,
@@ -204,4 +204,31 @@ export function onAuthChange(callback) {
   }
 
   return firebaseOnAuthChange(callback);
+}
+
+/**
+ * Initialize the first Admin profile in Firestore.
+ * This is used for the "Going Live" setup process.
+ */
+export async function initializeAdminProfile(uid, email, name) {
+  if (USE_MOCK_AUTH) {
+    await new Promise(r => setTimeout(r, 500));
+    return { uid, email, name, role: ROLES.ADMIN, isActive: true };
+  }
+
+  try {
+    const profileData = {
+      uid,
+      name,
+      email,
+      role: ROLES.ADMIN,
+      isActive: true,
+    };
+
+    await setDocument(COLLECTIONS.USERS, uid, profileData);
+    return profileData;
+  } catch (error) {
+    console.error('[authService.initializeAdminProfile]', error);
+    throw error;
+  }
 }

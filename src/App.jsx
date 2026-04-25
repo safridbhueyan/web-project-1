@@ -12,6 +12,7 @@ import DesignSystemDemo from './pages/DesignSystemDemo.jsx';
 
 // Dashboards
 import AdminDashboard from './pages/dashboards/AdminDashboard.jsx';
+import AdminSetup from './pages/AdminSetup.jsx';
 import FarmerDashboard from './pages/dashboards/FarmerDashboard.jsx';
 import InvestorDashboard from './pages/dashboards/InvestorDashboard.jsx';
 import VetDashboard from './pages/dashboards/VetDashboard.jsx';
@@ -69,6 +70,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={user ? <Navigate to={getRootRedirect()} replace /> : <Login />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/init-admin" element={<AdminSetup />} />
         {/* Design system demo — dev only */}
         {import.meta.env.DEV && <Route path="/design" element={<DesignSystemDemo />} />}
 
