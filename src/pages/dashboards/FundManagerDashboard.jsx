@@ -5,9 +5,16 @@ import Table from '../../components/ui/Table';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { DollarSign, PieChart, Send, CreditCard } from 'lucide-react';
 import { getAllTransactions } from '../../services/transactionService';
+import { formatBDT } from '../../utils/formatters';
+
+const SEED_TRANSACTIONS = [
+  { id: 'T1', type: 'deposit', amount: 500000, userId: 'u1', status: 'completed', createdAt: '2026-04-15' },
+  { id: 'T2', type: 'payout', amount: 25000, userId: 'u2', status: 'pending', createdAt: '2026-04-22' },
+  { id: 'T3', type: 'deposit', amount: 100000, userId: 'u3', status: 'completed', createdAt: '2026-04-20' },
+];
 
 const FundManagerDashboard = () => {
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState(SEED_TRANSACTIONS);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -27,7 +34,7 @@ const FundManagerDashboard = () => {
   const columns = [
     { header: 'Transaction ID', accessor: 'id' },
     { header: 'Type', accessor: 'type', render: (v) => <span style={{ textTransform: 'capitalize' }}>{v}</span> },
-    { header: 'Amount', accessor: 'amount', render: (v) => `$${Number(v).toLocaleString()}` },
+    { header: 'Amount', accessor: 'amount', render: (v) => formatBDT(v) },
     { header: 'User ID', accessor: 'userId' },
     { header: 'Status', accessor: 'status', render: (v) => <StatusBadge status={v} /> },
     { header: 'Date', accessor: 'createdAt', render: (v) => v ? new Date(v).toLocaleDateString() : '—' },
@@ -43,8 +50,8 @@ const FundManagerDashboard = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-xl)' }}>
-        <Card variant="stat" title="Total Assets" value={`$${totalVolume.toLocaleString()}`} icon={PieChart} />
-        <Card variant="stat" title="Available Liquidity" value="$350K" icon={DollarSign} />
+        <Card variant="stat" title="Total Assets" value={formatBDT(totalVolume)} icon={PieChart} />
+        <Card variant="stat" title="Available Liquidity" value="৳35,00,000" icon={DollarSign} />
         <Card variant="stat" title="Pending Actions" value={String(pendingCount)} icon={Send} trend={{ value: pendingCount, isPositive: false }} />
         <Card variant="stat" title="Total Transactions" value={String(transactions.length)} icon={CreditCard} />
       </div>

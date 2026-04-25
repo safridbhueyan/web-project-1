@@ -8,8 +8,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { Bird, Calendar, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const SEED = [
-  { id: 'BCH-101', type: 'Broiler Chicken', quantity: 500, status: 'active', fsoId: 'FSO-01' },
-  { id: 'BCH-102', type: 'Broiler Chicken', quantity: 480, status: 'healthy', fsoId: 'FSO-01' },
+  { id: 'B1', type: 'Broiler Chicken', quantity: 500, status: 'active', fsoId: 'fso1' },
+  { id: 'B2', type: 'Cattle', quantity: 10, status: 'active', fsoId: 'fso1' },
+  { id: 'B3', type: 'Broiler Chicken', quantity: 450, status: 'sold', fsoId: 'fso1' },
 ];
 
 const FarmerDashboard = () => {
@@ -18,10 +19,13 @@ const FarmerDashboard = () => {
 
   useEffect(() => {
     (async () => {
+      if (!user?.uid) return;
       try {
-        const data = await getLivestockByFarmer(user?.uid || 'demo');
-        if (data.length) setLivestock(data);
-      } catch { /* use seed */ }
+        const data = await getLivestockByFarmer(user.uid);
+        setLivestock(data || []);
+      } catch (error) {
+        console.error('Error fetching farmer livestock:', error);
+      }
     })();
   }, [user]);
 
@@ -34,6 +38,7 @@ const FarmerDashboard = () => {
   ];
 
   const alerts = livestock.filter(l => l.status === 'sick' || l.status === 'critical').length;
+  const completedCycles = livestock.filter(l => l.status === 'sold' || l.status === 'harvested').length;
 
   return (
     <DashboardLayout>
@@ -45,9 +50,9 @@ const FarmerDashboard = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-xl)' }}>
-        <Card variant="stat" title="Active Livestock" value={livestock.reduce((s, l) => s + Number(l.quantity || 0), 0).toLocaleString()} icon={Bird} />
+        <Card variant="stat" title="Active Livestock" value={livestock.filter(l => l.status !== 'sold' && l.status !== 'harvested').reduce((s, l) => s + Number(l.quantity || 0), 0).toLocaleString()} icon={Bird} />
         <Card variant="stat" title="Total Batches" value={String(livestock.length)} icon={Calendar} />
-        <Card variant="stat" title="Completed Cycles" value="12" icon={CheckCircle} trend={{ value: 1, isPositive: true }} />
+        <Card variant="stat" title="Completed Cycles" value={String(completedCycles)} icon={CheckCircle} trend={{ value: completedCycles, isPositive: true }} />
         <Card variant="stat" title="Alerts" value={String(alerts)} icon={AlertTriangle} trend={{ value: alerts, isPositive: false }} />
       </div>
 

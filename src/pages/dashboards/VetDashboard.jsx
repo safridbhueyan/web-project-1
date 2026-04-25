@@ -4,12 +4,12 @@ import Card from '../../components/ui/Card';
 import Table from '../../components/ui/Table';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Syringe, Cross, Calendar, ClipboardList } from 'lucide-react';
-import { getVetRequests } from '../../services/vetService';
+import { getVetRequests, getPendingRequests } from '../../services/vetService';
 import { useAuth } from '../../hooks/useAuth';
 
 const SEED_REQUESTS = [
-  { id: 'VR-001', farmerId: 'farm-123', livestockId: 'LIV-99', issue: 'Suspected respiratory infection', status: 'pending', createdAt: '2026-04-20' },
-  { id: 'VR-002', farmerId: 'farm-456', livestockId: 'LIV-42', issue: 'Routine vaccination check', status: 'completed', createdAt: '2026-04-10' },
+  { id: 'R1', farmerId: 'f1', livestockId: 'L1', issue: 'Respiratory infection', status: 'pending', createdAt: '2026-04-20' },
+  { id: 'R2', farmerId: 'f2', livestockId: 'L5', issue: 'Routine vaccination', status: 'completed', createdAt: '2026-04-18' },
 ];
 
 const VetDashboard = () => {
@@ -18,9 +18,22 @@ const VetDashboard = () => {
 
   useEffect(() => {
     const fetchRequests = async () => {
+      if (!user?.uid) return;
       try {
-        const data = await getVetRequests(user?.uid || 'demo');
-        if (data && data.length > 0) setRequests(data);
+        const [assigned, pending] = await Promise.all([
+          getVetRequests(user.uid),
+          getPendingRequests(),
+        ]);
+
+        // Combine and dedup (in case assigned is also in pending, though unlikely by business logic)
+        const all = [...assigned, ...pending];
+        const unique = Array.from(new Map(all.map(r => [r.id, r])).values());
+
+        setRequests(unique.sort((a, b) => {
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+          return dateB - dateA;
+        }));
       } catch (error) {
         console.error('Failed to fetch vet requests:', error);
       }

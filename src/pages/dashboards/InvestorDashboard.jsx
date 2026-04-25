@@ -6,12 +6,19 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import TraceabilityView from '../../components/ui/TraceabilityView';
 import { getInvestmentsByInvestor } from '../../services/investmentService';
 import { getActivePackages } from '../../services/packageService';
+import { getTransactionsByUser } from '../../services/transactionService';
 import { useAuth } from '../../hooks/useAuth';
+import { formatBDT } from '../../utils/formatters';
 import { Briefcase, TrendingUp, DollarSign, PackageOpen } from 'lucide-react';
 
 const SEED_INVESTMENTS = [
-  { id: 'INV-001', packageId: 'pkg1', amount: 1500, expectedROI: 12, currentROI: 5.2, status: 'active', startDate: '2026-01-01', endDate: '2026-07-01' },
-  { id: 'INV-002', packageId: 'pkg2', amount: 2000, expectedROI: 15, currentROI: 0, status: 'active', startDate: '2026-02-01', endDate: '2027-02-01' },
+  { id: 'I1', packageId: 'Broiler Batch 500', amount: 50000, expectedROI: 12, currentROI: 8, status: 'active', endDate: '2026-06-15' },
+  { id: 'I2', packageId: 'Cattle Fattening', amount: 150000, expectedROI: 18, currentROI: 15, status: 'active', endDate: '2026-12-01' },
+];
+
+const SEED_TRANSACTIONS = [
+  { id: 'T1', type: 'deposit', amount: 200000, status: 'completed', date: '2026-03-01' },
+  { id: 'T2', type: 'payout', amount: 50000, status: 'completed', date: '2026-03-15' },
 ];
 
 const DEMO_TRACE = {
@@ -25,28 +32,38 @@ const DEMO_TRACE = {
 const InvestorDashboard = () => {
   const { user } = useAuth();
   const [investments, setInvestments] = useState(SEED_INVESTMENTS);
-  const [availablePackages, setAvailablePackages] = useState(8);
+  const [transactions, setTransactions] = useState(SEED_TRANSACTIONS);
+  const [availablePackages, setAvailablePackages] = useState(2);
 
   useEffect(() => {
     (async () => {
+      if (!user?.uid) return;
       try {
-        const [inv, pkgs] = await Promise.all([
-          getInvestmentsByInvestor(user?.uid || 'demo'),
+        const [inv, pkgs, txs] = await Promise.all([
+          getInvestmentsByInvestor(user.uid),
           getActivePackages(),
+          getTransactionsByUser(user.uid),
         ]);
-        if (inv.length) setInvestments(inv);
-        if (pkgs.length) setAvailablePackages(pkgs.length);
-      } catch { /* use seed */ }
+        setInvestments(inv || []);
+        setAvailablePackages(pkgs?.length || 0);
+        setTransactions(txs || []);
+      } catch (error) {
+        console.error('Error fetching investor data:', error);
+      }
     })();
   }, [user]);
 
   const totalInvested = investments.reduce((s, i) => s + Number(i.amount || 0), 0);
   const estReturns = investments.reduce((s, i) => s + Number(i.amount || 0) * Number(i.expectedROI || 0) / 100, 0);
 
+  const walletBalance = transactions
+    .filter(t => t.status === 'completed')
+    .reduce((sum, t) => t.type === 'payout' ? sum + t.amount : sum - t.amount, 0);
+
   const columns = [
     { header: 'Investment ID', accessor: 'id' },
     { header: 'Package', accessor: 'packageId' },
-    { header: 'Amount', accessor: 'amount', render: (v) => `$${Number(v).toLocaleString()}` },
+    { header: 'Amount', accessor: 'amount', render: (v) => formatBDT(v) },
     { header: 'Est. ROI', accessor: 'expectedROI', render: (v) => `${v}%` },
     { header: 'Current ROI', accessor: 'currentROI', render: (v) => <span style={{ color: '#16a34a', fontWeight: 600 }}>{v}%</span> },
     { header: 'Status', accessor: 'status', render: (v) => <StatusBadge status={v} /> },
@@ -63,9 +80,9 @@ const InvestorDashboard = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-xl)' }}>
-        <Card variant="stat" title="Total Invested" value={`$${totalInvested.toLocaleString()}`} icon={Briefcase} />
-        <Card variant="stat" title="Est. Returns" value={`$${Math.round(estReturns).toLocaleString()}`} icon={TrendingUp} trend={{ value: estReturns > 0 ? Math.round(estReturns / totalInvested * 100) : 0, isPositive: true }} />
-        <Card variant="stat" title="Wallet Balance" value="$1,250" icon={DollarSign} />
+        <Card variant="stat" title="Total Invested" value={formatBDT(totalInvested)} icon={Briefcase} />
+        <Card variant="stat" title="Est. Returns" value={formatBDT(Math.round(estReturns))} icon={TrendingUp} trend={{ value: totalInvested > 0 ? Math.round(estReturns / totalInvested * 100) : 0, isPositive: true }} />
+        <Card variant="stat" title="Wallet Balance" value={formatBDT(walletBalance)} icon={DollarSign} />
         <Card variant="stat" title="Available Packages" value={String(availablePackages)} icon={PackageOpen} />
       </div>
 
